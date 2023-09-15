@@ -6,12 +6,13 @@ The authentication is insecure, and email validation is not yet implemented.
 #TODO:
 # -Authentication from CSV file- complete
 #Linux-like command-line launch(with argument parsing)
-
-
+import os
+import argparse
 from abc import abstractclassmethod,abstractmethod
 import requests
 from sys import exit
 import csv
+from typing import List
 
 
 class MailGun:
@@ -30,7 +31,7 @@ class MailGun:
         self.api_url=api_url
         self.domain_country=domain_country
 
-    def set_params(self):
+    def set_params(self) -> 'Mail':
 
         self.api_key=input("Enter API key:\n")
         self.domain_country=input("Enter domain country:\n").strip().upper()
@@ -53,7 +54,7 @@ class MailGun:
 
     #Not implemented correctly
     @abstractclassmethod
-    def check_api_key(cls,api_key,api_url):
+    def check_api_key(cls,api_key,api_url) -> None:
         authenticate=requests.post(
         api_url,
         auth=('api',api_key)
@@ -70,9 +71,9 @@ class MailGun:
     def send_email(cls): ...
 
 
-    def set_params_from_csv(self):
+    def set_params_from_csv(self) -> None:
         """
-        Read and sets the necessary parameters using a CSV file.
+        Reads and sets the necessary parameters using a CSV file.
         The CSV file should be named "api.csv" and formatted thusly:
         api_key,domain_country,domain_name
         """
@@ -99,6 +100,16 @@ class MailGun:
                 case _:
                     self.api_url="https://api.mailgun.net/v3/{domain_name}/messages".format(domain_name=self.domain_name)
                 
+        #Getters
+    def get_api_key(self) -> str:
+        return self.api_key
+    
+        #Particular Setter for Parser - experimental
+    def set_api_key(self,api_key) -> str:
+        self.api_key=api_key
+    
+
+
 
 class Mail(MailGun):
 
@@ -115,7 +126,7 @@ class Mail(MailGun):
         return self
 
 
-    def send_email(self):
+    def send_email(self) -> 'Mail':
 
         try:
             request = requests.post(
@@ -140,17 +151,41 @@ class Mail(MailGun):
 
         return self
 
+
     def check_mails(self):
         pass
 
+    def get_to_emails(self) -> List[str]:
+        return self.to_emails
+
+def Parser(mail):
+
+    #parser=None
+    def init_parser(mail):
+        parser=argparse.ArgumentParser(description="Send emails using MailGun API.")
+        # parser.add_argument('-k','--key',type=str,nargs='?',help='MailGun API Key',required=False)
+        # parser.add_argument('-d','--domain-name',nargs='?',help='Set domain name (email address)',required=False)
+        # parser.add_argument('-c','--domain-country',nargs='?',help='Set domain country (EU or US)',required=False)
+        parser.add_argument('--api-key',required=True,nargs='?',
+                            help="Set MailGun API key",type=str,action='store',
+                            const=mail.set_api_key)
+                            
+        parser.parse_args()
+    return init_parser
 
 
+#Example flow
 def main():
 
     mail=Mail()
-    mail.set_params_from_csv()
-    mail.set_mail_contents()
-    mail.send_email()
+    # mail.set_params_from_csv()
+    # mail.set_mail_contents()
+    # mail.send_email()
+
+    parse_init = Parser(mail) #Closure
+    parser = parse_init(mail)
+
+
 
 
 if __name__=="__main__":
