@@ -11,23 +11,23 @@ mail=Mail()
 
 class MainMenu:
  
-    def load_contents_and_send_email(self):
+    def load_contents_and_send_email(self) -> None:
 
         mail.set_mail_contents()
         mail.send_email()
 
-    def set_params_interactive_feedback(self):
+    def set_params_interactive_feedback(self) -> None:
         mail.set_params()
         self.data_loaded = consolemenu.Screen().println(colorama.Fore.GREEN+"Data loaded successfully")
         time.sleep(1)
 
-    def set_params_csv_feedback(self):
+    def set_params_csv_feedback(self) -> None:
         mail.set_params_from_csv()
         self.data_loaded = consolemenu.Screen().println(colorama.Fore.GREEN+"Data loaded successfully")
         time.sleep(1)
 
 
-    def __init__(self):
+    def __init__(self) -> None:
         
 
         self.hero_title = pyfiglet.figlet_format("Mail-Sender", 'small')
@@ -50,9 +50,8 @@ class MainMenu:
         self.menu.append_item(self.check_mail_prompt)
         self.menu.append_item(self.exit_menu)
         
-
         
-    def show(self):
+    def show(self) -> None:
         self.menu.show()
 
 
