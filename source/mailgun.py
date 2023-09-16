@@ -76,6 +76,7 @@ class MailGun:
     def set_params_from_csv(self) -> None:
         """
         Reads and sets the necessary parameters using a CSV file.
+        Reads and sets the necessary parameters using a CSV file.
         The CSV file should be named "api.csv" and formatted thusly:
         api_key,domain_country,domain_name
         """
@@ -169,6 +170,7 @@ class Mail(MailGun):
             exit(1)
 
         return self
+
 
     def check_mails(self):
         pass
