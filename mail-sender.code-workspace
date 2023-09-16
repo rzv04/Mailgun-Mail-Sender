@@ -4,5 +4,25 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.autoSave": "afterDelay",
+		"[python]": {
+			"editor.formatOnType": false
+		}
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Launch mailgun.py",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/source/mailgun.py",
+				"args": [
+					"--csv",
+					"/home/razvan/Desktop/mail-sender/api.csv"
+				]
+			}
+		]
+	}
 }

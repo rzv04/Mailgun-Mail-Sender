@@ -1,12 +1,29 @@
-# Ignore Python Virtual Environment
-.venv/
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-#Ignore compiled Python files
-*.pyc
-__*__
+# C extensions
+*.so
 
-#Ignore example CSV File
-*.csv
+# Distribution / packaging
+.Python
+env/
+build/
+dist/
+eggs/
+*.egg-info/
+*.egg
 
-#Ignore VSCode settings
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE settings
+.idea/
 .vscode/
+*.code-workspace
+
+# Ignore example CSV files
+*.csv
