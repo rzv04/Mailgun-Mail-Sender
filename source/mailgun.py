@@ -5,7 +5,7 @@ The authentication is insecure, and email validation (SPF,DKIM,DMARC) is not yet
 
 # TODO:
 # -Authentication from CSV file- complete
-# Linux-like command-line launch(with argument parsing)
+# Linux-like command-line launch(with argument parsing) - in progress
 import os
 import argparse
 from abc import abstractclassmethod, abstractmethod
@@ -63,6 +63,22 @@ class MailGun:
 
         return self
 
+    # Getters
+
+    def get_api_key(self) -> str:
+        return self.api_key
+
+    def get_csv_path(self) -> str:
+        return self.csv_path
+
+        # Particular Setter for Parser - experimental
+
+    def set_csv_path(self, csv_path):
+        if os.path.exists(csv_path):
+            self.csv_path = csv_path
+        else:
+            raise FileNotFoundError("Incorrect CSV file path.")
+
     # Experimental - credential authentication - slow, should be used for first setup only
     ##################################################
     def validate_credentials(self, api_key, domain_name, domain_country):
@@ -99,9 +115,9 @@ class MailGun:
     ####################################################
 
     # Not implemented correctly
-    @abstractclassmethod
-    def check_api_key(cls, api_key, api_url):
-        authenticate = requests.post(api_url, auth=("api", api_key))
+    @abstractmethod
+    def check_api_key(self):
+        authenticate = requests.post(self.api_url, auth=("api", self.api_key))
         if authenticate.status_code == 200:
             print("Authentication successful")
 
@@ -154,22 +170,6 @@ class MailGun:
                         )
                     )
 
-        # Getters
-
-    def get_api_key(self) -> str:
-        return self.api_key
-
-    def get_csv_path(self) -> str:
-        return self.csv_path
-
-        # Particular Setter for Parser - experimental
-
-    def set_csv_path(self, csv_path):
-        if os.path.exists(csv_path):
-            self.csv_path = csv_path
-        else:
-            raise FileNotFoundError("Incorrect CSV file path.")
-
 
 class Mail(MailGun):
 
@@ -210,27 +210,11 @@ class Mail(MailGun):
 
         return self
 
-    def check_mails(self):
-        pass
-
     def get_to_emails(self) -> List[str]:
         return self.to_emails
 
-
-def Parser(mail):
-    # parser=None
-    def init_parser(mail):
+    def init_parser(self):
         parser = argparse.ArgumentParser(description="Send emails using MailGun API.")
-
-        # parser.add_argument(
-        #     "--api-key",
-        #     required=False,
-        #     nargs="?",
-        #     help="Set MailGun API key",
-        #     type=str,
-        #     action="store",
-        #     const=mail.set_api_key,
-        # )
 
         parser.add_argument(
             "--csv",
@@ -241,28 +225,40 @@ def Parser(mail):
             action="store",
         )
 
-        args = parser.parse_args()
-        mail.set_csv_path(args.csv)
-        mail.set_params_from_csv()
+        # parser.add_argument(
+        #     "-c","--cli",
+        #     required=False,
+        #     nargs="?",
+        #     help="""
+        #     """,
 
-    return init_parser
+        # )
+
+        args = parser.parse_args()
+        self.set_csv_path(
+            args.csv
+        )  # args is a Namespace object containing the csv attribute
+        self.set_params_from_csv()
+
+    # Not implemented yet
+    @abstractmethod
+    def check_mails(self):
+        pass
 
 
 # Example flow
 def main():
     mail = Mail()
+    mail.init_parser()
 
-    mail.set_params_from_csv()
-    response, message = mail.validate_credentials(
-        mail.api_key, mail.domain_name, mail.domain_country
-    )
+    # mail.set_params_from_csv()
+    # response, message = mail.validate_credentials(
+    #     mail.api_key, mail.domain_name, mail.domain_country
+    # )
 
-    print(message)
+    # print(message)
     # mail.set_mail_contents()
     # mail.send_email()
-
-    # parse_init = Parser(mail)  # Closure
-    # parser = parse_init(mail)
 
 
 if __name__ == "__main__":
