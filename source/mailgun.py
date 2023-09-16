@@ -1,6 +1,6 @@
 """
 Simple mail-sending driving code using MailGun.
-The authentication is insecure, and email validation is not yet implemented.
+The authentication is insecure, and email validation (SPF,DKIM,DMARC) is not yet implemented.
 """
 
 # TODO:
@@ -23,7 +23,12 @@ class MailGun:
     """
 
     def __init__(
-        self, api_key="", domain_name="", api_url="", domain_country="", csv_path=""
+        self,
+        api_key="",
+        domain_name="",
+        api_url="",
+        domain_country="",
+        csv_path="api.csv",
     ) -> None:
         self.api_key = api_key
         self.domain_name = domain_name
@@ -57,6 +62,41 @@ class MailGun:
                 )
 
         return self
+
+    # Experimental - credential authentication - slow, should be used for first setup only
+    ##################################################
+    def validate_credentials(self, api_key, domain_name, domain_country):
+        # Validate API key
+        response = requests.get(
+            "https://api.mailgun.net/v3/domains", auth=("api", self.api_key)
+        )
+        if response.status_code != 200:
+            return False, "Invalid API key"
+
+        # Validate domain name
+        response = requests.get(
+            f"https://api.mailgun.net/v3/domains/{self.domain_name}",
+            auth=("api", self.api_key),
+        )
+        if response.status_code != 200:
+            return False, "Invalid domain name"
+
+        # Validate domain country - Not implemented
+        # response = requests.get(
+        #     f"https://api.mailgun.net/v3/domains/{self.domain_name}",
+        #     auth=("api", self.api_key),
+        # )
+        # if response.status_code == 200:
+        #     data = response.json()
+        #     if data["region"] != domain_country:
+        #         return False, "Domain country does not match"
+        # else:
+        #     return False, "Failed to validate domain country"
+
+        # All validations passed
+        return True, "Valid credentials"
+
+    ####################################################
 
     # Not implemented correctly
     @abstractclassmethod
@@ -128,8 +168,7 @@ class MailGun:
         if os.path.exists(csv_path):
             self.csv_path = csv_path
         else:
-            raise FileNotFoundError ("Incorrect CSV file path.")
-            
+            raise FileNotFoundError("Incorrect CSV file path.")
 
 
 class Mail(MailGun):
@@ -170,7 +209,6 @@ class Mail(MailGun):
             exit(1)
 
         return self
-
 
     def check_mails(self):
         pass
@@ -213,12 +251,18 @@ def Parser(mail):
 # Example flow
 def main():
     mail = Mail()
-    # mail.set_params_from_csv()
+
+    mail.set_params_from_csv()
+    response, message = mail.validate_credentials(
+        mail.api_key, mail.domain_name, mail.domain_country
+    )
+
+    print(message)
     # mail.set_mail_contents()
     # mail.send_email()
 
-    parse_init = Parser(mail)  # Closure
-    parser = parse_init(mail)
+    # parse_init = Parser(mail)  # Closure
+    # parser = parse_init(mail)
 
 
 if __name__ == "__main__":

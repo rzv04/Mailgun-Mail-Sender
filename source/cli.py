@@ -11,15 +11,14 @@ mail = Mail()
 
 
 class MainMenu:
-<<<<<<< HEAD
     def load_contents_and_send_email(self) -> None:
-=======
- 
-    def load_contents_and_send_email(self) -> None:
-
->>>>>>> c74302bf56e05bb5e615dc7e258844a6d70f56d6
         mail.set_mail_contents()
         mail.send_email()
+
+        self.data_loaded = consolemenu.Screen().println(
+            colorama.Fore.GREEN + "Data loaded successfully"
+        )
+        time.sleep(1)
 
     def set_params_interactive_feedback(self) -> None:
         mail.set_params()
@@ -38,12 +37,7 @@ class MainMenu:
     def __init__(self) -> None:
         self.hero_title = pyfiglet.figlet_format("Mail-Sender", "small")
 
-<<<<<<< HEAD
         self.hero_subtitle = "Send emails using the Mailgun API"
-=======
-    def __init__(self) -> None:
-        
->>>>>>> c74302bf56e05bb5e615dc7e258844a6d70f56d6
 
         self.menu = consolemenu.ConsoleMenu(
             colorama.Fore.GREEN + self.hero_title,
@@ -55,14 +49,16 @@ class MainMenu:
             colorama.Fore.GREEN + "Input API credentials",
             self.set_params_interactive_feedback,
         )
+
         self.enter_api_key_csv = consolemenu.items.FunctionItem(
             colorama.Fore.GREEN + "Input API credentials from api.csv",
             self.set_params_csv_feedback,
-        )  ##
+        )
 
         self.send_email_prompt = consolemenu.items.FunctionItem(
             colorama.Fore.GREEN + "Send An Email", self.load_contents_and_send_email
-        )  ##
+        )
+
         self.check_mail_prompt = consolemenu.items.FunctionItem(
             colorama.Fore.GREEN + "Check Recieved Messages (Not Implemented)",
             mail.check_mails,
@@ -75,12 +71,7 @@ class MainMenu:
         self.menu.append_item(self.send_email_prompt)
         self.menu.append_item(self.check_mail_prompt)
         self.menu.append_item(self.exit_menu)
-<<<<<<< HEAD
 
-=======
-        
-        
->>>>>>> c74302bf56e05bb5e615dc7e258844a6d70f56d6
     def show(self) -> None:
         self.menu.show()
 
