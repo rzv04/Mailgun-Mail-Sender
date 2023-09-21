@@ -7,12 +7,16 @@ The authentication is insecure, and email validation (SPF,DKIM,DMARC) is not yet
 # -Authentication from CSV file- complete
 # Linux-like command-line launch(with argument parsing) - in progress
 import os
+
+# from sys import argv
 import argparse
 from abc import abstractclassmethod, abstractmethod
 import requests
 from sys import exit
 import csv
 from typing import List
+import hashlib
+import json
 
 
 class MailGun:
@@ -28,7 +32,7 @@ class MailGun:
         domain_name="",
         api_url="",
         domain_country="",
-        csv_path="api.csv",
+        csv_path="api.csv",  # default values
     ) -> None:
         self.api_key = api_key
         self.domain_name = domain_name
@@ -74,6 +78,8 @@ class MailGun:
         # Particular Setter for Parser - experimental
 
     def set_csv_path(self, csv_path):
+        if csv_path == None:
+            raise ValueError("CSV file path not specified.")
         if os.path.exists(csv_path):
             self.csv_path = csv_path
         else:
@@ -136,7 +142,7 @@ class MailGun:
         The CSV file should be named "api.csv" and formatted thusly:
         api_key,domain_country,domain_name
         """
-
+        self.set_csv_path(self.csv_path)
         with open(self.csv_path, "r") as read_file:
             reader = csv.DictReader(read_file)
 
@@ -225,24 +231,90 @@ class Mail(MailGun):
             action="store",
         )
 
-        # parser.add_argument(
-        #     "-c","--cli",
-        #     required=False,
-        #     nargs="?",
-        #     help="""
-        #     """,
+        parser.add_argument(
+            "-c",
+            "--cli",
+            required=False,
+            nargs="?",
+            help="""Use CLI mode of the script.Required to use the other arguments.
+            All of the other arguments become mandatory to use when this argument is used.
+            """,
+        )
+        parser.add_argument(
+            "-n",
+            "--name",
+            required=False,
+            nargs="?",
+            help="""Input your name""",
+            action="store",
+        )
+        parser.add_argument(
+            "-e",
+            "--emails",
+            required=False,
+            nargs="?",
+            help="""Input emails to send to""",
+            action="store",
+        )
+        parser.add_argument(
+            "-s",
+            "--subject",
+            required=False,
+            nargs="?",
+            help="""Enter email Title/Subject""",
+            action="store",
+        )
+        parser.add_argument(
+            "-t",
+            "--text",
+            required=False,
+            nargs="?",
+            help="""Enter email content""",
+            action="store",
+        )
+        return parser
+        # If
 
-        # )
-
+    def parse_args(self, parser):
         args = parser.parse_args()
+
         self.set_csv_path(
             args.csv
         )  # args is a Namespace object containing the csv attribute
-        self.set_params_from_csv()
+        if args.cli:
+            self.set_params_from_csv()
+        else:
+            raise ValueError("Incorrect arguments passed.")
 
     # Not implemented yet
     @abstractmethod
     def check_mails(self):
+        pass
+
+
+class Config:
+    pass
+
+
+class Hasher:
+    """
+    Simple MD5 Checksum hashing method.
+    Might break the program if the CSV file is intentionally too large.
+    """
+
+    def __init__(self: "Hasher", mail: "Mail", file_hash: str = "") -> None:
+        self.csv_path = mail.get_csv_path()
+        self.file_hash = file_hash
+
+    def hash_csv(self: "Hasher"):
+        md5_hash = hashlib.md5()
+        with open(self.csv_path, "rb") as reader:
+            md5_bytes = reader.read()
+            md5_hash.update(md5_bytes)
+            file_hash = md5_hash.hexdigest()
+        self.file_hash = file_hash
+
+    def check_hash(self):
         pass
 
 

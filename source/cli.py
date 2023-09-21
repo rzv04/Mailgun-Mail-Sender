@@ -1,8 +1,9 @@
 import consolemenu
 import consolemenu.items
-import colorama
+from colorama.ansi import Fore
 import pyfiglet
-from sys import exit
+from sys import exit, argv
+from os.path import exists
 from mailgun import Mail
 import time
 
@@ -11,17 +12,19 @@ class FeedbackHandler:
     def __init__(self):
         pass
 
+        # Fore is Font Foreground color
+
     def data_loaded_successfully(self):
-        consolemenu.Screen().println(colorama.Fore.GREEN + "Data loaded successfully")
+        consolemenu.Screen().println(Fore.GREEN + "Data loaded successfully")
 
     def data_load_failed(self):
-        consolemenu.Screen().println(colorama.Fore.RED + "Data load failed")
+        consolemenu.Screen().println(Fore.RED + "Data load failed")
 
     def data_updated_successfully(self):
-        consolemenu.Screen().println(colorama.Fore.GREEN + "Data updated successfully")
+        consolemenu.Screen().println(Fore.GREEN + "Data updated successfully")
 
     def data_update_failed(self):
-        consolemenu.Screen().println(colorama.Fore.RED + "Data update failed")
+        consolemenu.Screen().println(Fore.RED + "Data update failed")
 
 
 class MainMenu:
@@ -52,31 +55,31 @@ class MainMenu:
         self.hero_subtitle = "Send emails using the Mailgun API"
 
         self.menu = consolemenu.ConsoleMenu(
-            colorama.Fore.GREEN + self.hero_title,
-            subtitle=colorama.Fore.BLUE + self.hero_subtitle,
+            Fore.GREEN + self.hero_title,
+            subtitle=Fore.BLUE + self.hero_subtitle,
             show_exit_option=False,
         )
 
         self.enter_api_key_interactive = consolemenu.items.FunctionItem(
-            colorama.Fore.GREEN + "Input API credentials",
+            Fore.GREEN + "Input API credentials",
             self.set_params_interactive_feedback,
         )
 
         self.enter_api_key_csv = consolemenu.items.FunctionItem(
-            colorama.Fore.GREEN + "Input API credentials from api.csv",
+            Fore.GREEN + "Input API credentials from api.csv",
             self.set_params_csv_feedback,
         )
 
         self.send_email_prompt = consolemenu.items.FunctionItem(
-            colorama.Fore.GREEN + "Send An Email", self.load_contents_and_send_email
+            Fore.GREEN + "Send An Email", self.load_contents_and_send_email
         )
 
         self.check_mail_prompt = consolemenu.items.FunctionItem(
-            colorama.Fore.GREEN + "Check Recieved Messages (Not Implemented)",
+            Fore.GREEN + "Check Recieved Messages (Not Implemented)",
             self.mail.check_mails,
         )  # TODO
 
-        self.exit_menu = consolemenu.items.ExitItem(colorama.Fore.RED + "Exit")
+        self.exit_menu = consolemenu.items.ExitItem(Fore.RED + "Exit")
 
         self.menu.append_item(self.enter_api_key_interactive)
         self.menu.append_item(self.enter_api_key_csv)
@@ -89,8 +92,12 @@ class MainMenu:
 
 
 def main():
-    console = MainMenu()
-    console.show()
+    if len(argv) == 1:
+        console = MainMenu()
+        console.show()
+    else:
+        mail = Mail()
+        mail.parse_args(mail.init_parser())
 
 
 if __name__ == "__main__":
