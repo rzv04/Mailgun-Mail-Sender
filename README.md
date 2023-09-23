@@ -12,3 +12,5 @@ The mailgun module also includes a simple argument parser that for now supports 
     Windows:
     pip install -r requirements.txt
     python3 path\to\folder\source\cli.py
+
+![TUI Image](https://github.com/YoloTheBEst/Mailgun-Mail-Sender/blob/main/images/TUI.png)
