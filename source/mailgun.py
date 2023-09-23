@@ -78,7 +78,7 @@ class MailGun:
         else:
             raise FileNotFoundError("Incorrect CSV file path.")
 
-    # Experimental - credential authentication - slow, should be used for first setup only
+    # Credential authentication - slow, should be used for first setup only (checked through config and hash)
     ##################################################
     def validate_credentials(self):
         # Validate API key
@@ -96,8 +96,6 @@ class MailGun:
             return False, "Invalid domain name"
 
         return True, "Valid credentials"
-
-    ####################################################
 
     # Not implemented correctly
     @abstractmethod
@@ -164,7 +162,6 @@ class MailGun:
             Config.update_config(already_loaded)
 
         if already_loaded:
-            # Hasher.set_class_attrs(mail)
             hash_check = Hasher.hash_csv()
             with open(Config.config_path, "r") as reader:
                 json_data = json.load(reader)
@@ -325,10 +322,6 @@ class Hasher:
         cls.file_hash = file_hash
         return cls.file_hash
 
-    def check_hash(self):
-        # TODO document why this method is empty
-        pass
-
 
 class Config:
     """
@@ -393,7 +386,7 @@ class Config:
 
 # Example flow
 def main():
-    # mail = Mail()
+    
 
     mail.parse_args(mail.init_parser())
 
