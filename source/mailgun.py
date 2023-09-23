@@ -386,8 +386,6 @@ class Config:
 
 # Example flow
 def main():
-    
-
     mail.parse_args(mail.init_parser())
 
 
