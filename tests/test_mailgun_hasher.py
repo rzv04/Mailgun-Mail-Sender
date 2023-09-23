@@ -28,11 +28,12 @@ class TestHasher(unittest.TestCase):
         self.assertEqual(actual_hash, expected_hash)
 
     def test_hash_csv_empty_file(self):
+        expected_hash = hashlib.md5(b"").hexdigest()
         with open(self.csv_path, "wb"):
             pass
         with patch.object(Hasher, "csv_path", self.csv_path):
             actual_hash = Hasher.hash_csv()
-        self.assertEqual(actual_hash, "")
+        self.assertEqual(actual_hash, expected_hash)
 
     def test_hash_csv_nonexistent_file(self):
         with patch.object(Hasher, "csv_path", "nonexistent.csv"):
