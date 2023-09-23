@@ -11,18 +11,20 @@ from mailgun import Hasher
 
 
 class TestHasher(unittest.TestCase):
+    test_data: str = "test data"
+
     @classmethod
     def setUpClass(cls):
         cls.csv_path = "test.csv"
         with open(cls.csv_path, "wb") as writer:
-            writer.write(b"test data")
+            writer.write(bytes(cls.test_data, "utf-8"))
 
     @classmethod
     def tearDownClass(cls):
         Path(cls.csv_path).unlink()
 
     def test_hash_csv(self):
-        expected_hash = hashlib.md5(b"test data").hexdigest()
+        expected_hash = hashlib.md5(bytes(self.test_data, "utf-8")).hexdigest()
         with patch.object(Hasher, "csv_path", self.csv_path):
             actual_hash = Hasher.hash_csv()
         self.assertEqual(actual_hash, expected_hash)
@@ -30,7 +32,7 @@ class TestHasher(unittest.TestCase):
     def test_hash_csv_empty_file(self):
         expected_hash = hashlib.md5(b"").hexdigest()
         with open(self.csv_path, "wb"):
-            pass
+            pass  # empty file
         with patch.object(Hasher, "csv_path", self.csv_path):
             actual_hash = Hasher.hash_csv()
         self.assertEqual(actual_hash, expected_hash)

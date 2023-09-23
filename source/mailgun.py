@@ -31,11 +31,11 @@ class MailGun:
 
     def __init__(
         self,
-        api_key="",
-        domain_name="",
-        api_url="",
-        domain_country="",
-        csv_path="api.csv",  # default values
+        api_key: str = "",
+        domain_name: str = "",
+        api_url: str = "",
+        domain_country: str = "",
+        csv_path: str = "api.csv",  # default values
     ) -> None:
         self.api_key = api_key
         self.domain_name = domain_name
@@ -43,24 +43,28 @@ class MailGun:
         self.domain_country = domain_country
         self.csv_path = csv_path
 
-    def set_params(self):
-        self.api_key = input("Enter API key:\n")
-        self.domain_country = input("Enter domain country:\n").strip().upper()
-        self.domain_name = input("Enter domain name:\n")
+    def set_params(self) -> "MailGun":
+        self.api_key: str = input("Enter API key:\n")
+        self.domain_country: str = input("Enter domain country:\n").strip().upper()
+        self.domain_name: str = input("Enter domain name:\n")
 
         match self.domain_country:
             case "US":
-                self.api_url = self.MAILGUN_API_URL.format(domain_name=self.domain_name)
+                self.api_url: str = self.MAILGUN_API_URL.format(
+                    domain_name=self.domain_name
+                )
             case "EU":
-                self.api_url = self.EU_MAILGUN_API_URL.format(
+                self.api_url: str = self.EU_MAILGUN_API_URL.format(
                     domain_name=self.domain_name
                 )
             case _:
-                self.api_url = self.MAILGUN_API_URL.format(domain_name=self.domain_name)
+                self.api_url: str = self.MAILGUN_API_URL.format(
+                    domain_name=self.domain_name
+                )
 
         return self
 
-        # Getters
+    # Getters
 
     def get_api_key(self) -> str:
         return self.api_key
@@ -70,8 +74,8 @@ class MailGun:
 
         # Particular Setter for Parser - experimental
 
-    def set_csv_path(self, csv_path):
-        if csv_path == None:
+    def set_csv_path(self, csv_path: str) -> None:
+        if csv_path is None:
             raise ValueError("CSV file path not specified.")
         if os.path.exists(csv_path):
             self.csv_path = csv_path
@@ -97,20 +101,7 @@ class MailGun:
 
         return True, "Valid credentials"
 
-    # Not implemented correctly
-    @abstractmethod
-    def check_api_key(self):
-        authenticate = requests.post(self.api_url, auth=("api", self.api_key))
-        if authenticate.status_code == 200:
-            print("Authentication successful")
-
-        else:
-            print("Error:", authenticate.text)
-            exit(1)
-
-    @abstractmethod
-    def send_email(cls):
-        ...
+    ##################################################
 
     def set_params_from_csv(self) -> None:
         """
@@ -120,7 +111,7 @@ class MailGun:
         api_key,domain_country,domain_name
         """
 
-        def set_params():
+        def set_params() -> None:
             self.set_csv_path(self.csv_path)
 
             with open(self.csv_path, "r") as read_file:
@@ -183,7 +174,7 @@ class Mail(MailGun):
     Primary Mail class. Contains methods for setting MailGun API key, domain name, country, and for sending an email.
     """
 
-    def set_mail_contents_interactive(self):
+    def set_mail_contents_interactive(self) -> "Mail":
         self.from_name = input("Input your name: ")
         self.to_emails = input("Input emails to send to: ").split()
         self.subject = input("Enter email Title/Subject: ")
@@ -191,7 +182,7 @@ class Mail(MailGun):
 
         return self
 
-    def set_mail_contents_cli(self, args):
+    def set_mail_contents_cli(self, args) -> None:
         self.from_name = args.name
         self.to_emails = args.emails
         self.subject = args.subject
@@ -225,7 +216,7 @@ class Mail(MailGun):
     def get_to_emails(self) -> List[str]:
         return self.to_emails
 
-    def init_parser(self):
+    def init_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(description="Send emails using MailGun API.")
 
         parser.add_argument(
@@ -280,7 +271,7 @@ class Mail(MailGun):
         )
         return parser
 
-    def parse_args(self, parser):
+    def parse_args(self, parser) -> None:
         args = parser.parse_args()
 
         self.set_csv_path(
@@ -313,7 +304,7 @@ class Hasher:
     # This code opens a file and reads it in binary mode.
     # It then uses hashlib to compute the md5 hash of the file and stores it in a variable. It then returns the hash.
     @classmethod
-    def hash_csv(cls):
+    def hash_csv(cls) -> str:
         md5_hash = hashlib.md5()
         with open(cls.csv_path, "rb") as reader:
             md5_bytes = reader.read()
