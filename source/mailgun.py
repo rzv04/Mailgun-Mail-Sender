@@ -8,7 +8,7 @@ The authentication is insecure, and email validation (SPF,DKIM,DMARC) is not yet
 # Linux-like command-line launch(with argument parsing) - in progress
 import os
 
-# from sys import argv
+
 import argparse
 from abc import abstractclassmethod, abstractmethod
 import requests
@@ -25,6 +25,9 @@ class MailGun:
     Parent MailGun Class. Contains methods for obtaining the API Key, mail address,etc.
 
     """
+
+    MAILGUN_API_URL = "https://api.mailgun.net/v3/{domain_name}/messages"
+    EU_MAILGUN_API_URL = "https://api.eu.mailgun.net/v3/{domain_name}/messages"
 
     def __init__(
         self,
@@ -47,27 +50,17 @@ class MailGun:
 
         match self.domain_country:
             case "US":
-                self.api_url = (
-                    "https://api.mailgun.net/v3/{domain_name}/messages".format(
-                        domain_name=self.domain_name
-                    )
-                )
+                self.api_url = self.MAILGUN_API_URL.format(domain_name=self.domain_name)
             case "EU":
-                self.api_url = (
-                    "https://api.eu.mailgun.net/v3/{domain_name}/messages".format(
-                        domain_name=self.domain_name
-                    )
+                self.api_url = self.EU_MAILGUN_API_URL.format(
+                    domain_name=self.domain_name
                 )
             case _:
-                self.api_url = (
-                    "https://api.mailgun.net/v3/{domain_name}/messages".format(
-                        domain_name=self.domain_name
-                    )
-                )
+                self.api_url = self.MAILGUN_API_URL.format(domain_name=self.domain_name)
 
         return self
 
-    # Getters
+        # Getters
 
     def get_api_key(self) -> str:
         return self.api_key
@@ -87,11 +80,10 @@ class MailGun:
 
     # Experimental - credential authentication - slow, should be used for first setup only
     ##################################################
-    def validate_credentials(self, api_key, domain_name, domain_country):
+    def validate_credentials(self):
         # Validate API key
-        response = requests.get(
-            "https://api.mailgun.net/v3/domains", auth=("api", self.api_key)
-        )
+
+        response = requests.get("https://api.mailgun.net/", auth=("api", self.api_key))
         if response.status_code != 200:
             return False, "Invalid API key"
 
@@ -103,19 +95,6 @@ class MailGun:
         if response.status_code != 200:
             return False, "Invalid domain name"
 
-        # Validate domain country - Not implemented
-        # response = requests.get(
-        #     f"https://api.mailgun.net/v3/domains/{self.domain_name}",
-        #     auth=("api", self.api_key),
-        # )
-        # if response.status_code == 200:
-        #     data = response.json()
-        #     if data["region"] != domain_country:
-        #         return False, "Domain country does not match"
-        # else:
-        #     return False, "Failed to validate domain country"
-
-        # All validations passed
         return True, "Valid credentials"
 
     ####################################################
@@ -142,39 +121,63 @@ class MailGun:
         The CSV file should be named "api.csv" and formatted thusly:
         api_key,domain_country,domain_name
         """
-        self.set_csv_path(self.csv_path)
-        with open(self.csv_path, "r") as read_file:
-            reader = csv.DictReader(read_file)
 
-            for i in reader:
-                try:
-                    self.api_key = i["api_key"]
-                    self.domain_country = i["domain_country"].upper()
-                    self.domain_name = i["domain_name"]
+        def set_params():
+            self.set_csv_path(self.csv_path)
 
-                except KeyError:
-                    print("CSV File is incorrectly formatted.")
-                    exit(1)
+            with open(self.csv_path, "r") as read_file:
+                reader = csv.DictReader(read_file)
 
-            match self.domain_country:
-                case "US":
-                    self.api_url = (
-                        "https://api.mailgun.net/v3/{domain_name}/messages".format(
+                for i in reader:
+                    try:
+                        self.api_key = i["api_key"]
+                        self.domain_country = i["domain_country"].upper()
+                        self.domain_name = i["domain_name"]
+
+                    except KeyError:
+                        print("CSV File is incorrectly formatted.")
+                        exit(1)
+
+                match self.domain_country:
+                    case "US":
+                        self.api_url = self.MAILGUN_API_URL.format(
                             domain_name=self.domain_name
                         )
-                    )
-                case "EU":
-                    self.api_url = (
-                        "https://api.eu.mailgun.net/v3/{domain_name}/messages".format(
+                    case "EU":
+                        self.api_url = self.EU_MAILGUN_API_URL.format(
                             domain_name=self.domain_name
                         )
-                    )
-                case _:
-                    self.api_url = (
-                        "https://api.mailgun.net/v3/{domain_name}/messages".format(
+                    case _:
+                        self.api_url = self.MAILGUN_API_URL.format(
                             domain_name=self.domain_name
                         )
-                    )
+
+        if Config.check_for_config() == True and os.path.getsize(
+            Config.config_path
+        ):  # If config exists and is not empty
+            already_loaded = Config.load_config()
+            Config.update_config(already_loaded)
+
+        else:
+            Config.create_config()
+            already_loaded = False
+            Config.update_config(already_loaded)
+
+        if already_loaded:
+            # Hasher.set_class_attrs(mail)
+            hash_check = Hasher.hash_csv()
+            with open(Config.config_path, "r") as reader:
+                json_data = json.load(reader)
+                if hash_check == json_data["hash"] and json_data["Valid"] == True:
+                    return
+                else:
+                    set_params()
+                    valid, _ = self.validate_credentials()
+                    Config.update_config(valid)
+        else:
+            set_params()
+            valid, _ = self.validate_credentials()
+            Config.update_config(valid)
 
 
 class Mail(MailGun):
@@ -183,13 +186,19 @@ class Mail(MailGun):
     Primary Mail class. Contains methods for setting MailGun API key, domain name, country, and for sending an email.
     """
 
-    def set_mail_contents(self):
+    def set_mail_contents_interactive(self):
         self.from_name = input("Input your name: ")
         self.to_emails = input("Input emails to send to: ").split()
         self.subject = input("Enter email Title/Subject: ")
         self.content = input("Enter email content:\n")
 
         return self
+
+    def set_mail_contents_cli(self, args):
+        self.from_name = args.name
+        self.to_emails = args.emails
+        self.subject = args.subject
+        self.content = args.text
 
     def send_email(self) -> "Mail":
         try:
@@ -235,10 +244,10 @@ class Mail(MailGun):
             "-c",
             "--cli",
             required=False,
-            nargs="?",
             help="""Use CLI mode of the script.Required to use the other arguments.
             All of the other arguments become mandatory to use when this argument is used.
             """,
+            action="store_true",
         )
         parser.add_argument(
             "-n",
@@ -273,7 +282,6 @@ class Mail(MailGun):
             action="store",
         )
         return parser
-        # If
 
     def parse_args(self, parser):
         args = parser.parse_args()
@@ -283,6 +291,8 @@ class Mail(MailGun):
         )  # args is a Namespace object containing the csv attribute
         if args.cli:
             self.set_params_from_csv()
+            self.set_mail_contents_cli(args)
+            self.send_email()
         else:
             raise ValueError("Incorrect arguments passed.")
 
@@ -292,8 +302,7 @@ class Mail(MailGun):
         pass
 
 
-class Config:
-    pass
+mail = Mail()
 
 
 class Hasher:
@@ -302,35 +311,91 @@ class Hasher:
     Might break the program if the CSV file is intentionally too large.
     """
 
-    def __init__(self: "Hasher", mail: "Mail", file_hash: str = "") -> None:
-        self.csv_path = mail.get_csv_path()
-        self.file_hash = file_hash
+    csv_path = mail.get_csv_path()
 
-    def hash_csv(self: "Hasher"):
+    # This code opens a file and reads it in binary mode.
+    # It then uses hashlib to compute the md5 hash of the file and stores it in a variable. It then returns the hash.
+    @classmethod
+    def hash_csv(cls):
         md5_hash = hashlib.md5()
-        with open(self.csv_path, "rb") as reader:
+        with open(cls.csv_path, "rb") as reader:
             md5_bytes = reader.read()
             md5_hash.update(md5_bytes)
             file_hash = md5_hash.hexdigest()
-        self.file_hash = file_hash
+        cls.file_hash = file_hash
+        return cls.file_hash
 
     def check_hash(self):
+        # TODO document why this method is empty
         pass
+
+
+class Config:
+    """
+    Class for handling a JSON config file.
+    By default, the config file is/will be created in the same location as the
+    Python script.
+    """
+
+    system_type = os.name
+    config_path = (
+        os.getcwd() + "/" + "config.json"
+        if system_type == "posix"
+        else (os.getcwd() + "\\" + "config.json")
+    )
+
+    @classmethod
+    def check_for_config(cls) -> bool:
+        """
+        Checks for the existence of a JSON config file in the same path
+        as the Python script.
+        """
+        if os.path.isfile(cls.config_path):
+            return True
+        return False
+
+    @classmethod
+    def create_config(cls):  # Creates config and configures the setting
+        # Compute current CSV file hash
+        csv_hash = Hasher.hash_csv()
+        json_data = json.dumps({"Valid": None, "hash": csv_hash}, indent=4)  # TODO
+        with open(cls.config_path, "w") as reader:
+            reader.seek(0)
+            reader.write(json_data)
+            reader.truncate()
+
+    @classmethod
+    def load_config(
+        cls,
+    ) -> (
+        bool
+    ):  # If config exists, load config and check for valid credentials, returns bool if CSV file is already loaded
+        with open(cls.config_path, "r") as reader:
+            json_data = json.load(reader)
+            if json_data["Valid"] == "True":
+                return True
+            return False
+
+    @classmethod
+    def update_config(
+        cls, value: bool
+    ) -> (
+        None
+    ):  # Update the Valid setting with the given value.Takes 1 positional argument
+        with open(cls.config_path, "r+") as reader:
+            json_data = json.load(reader)
+            json_data["Valid"] = str(value)
+            json_data = json.dumps(json_data)
+            reader.seek(0)
+            reader.write(json_data)
+            reader.truncate()
 
 
 # Example flow
 def main():
-    mail = Mail()
-    mail.init_parser()
+    # mail = Mail()
 
-    # mail.set_params_from_csv()
-    # response, message = mail.validate_credentials(
-    #     mail.api_key, mail.domain_name, mail.domain_country
-    # )
-
-    # print(message)
-    # mail.set_mail_contents()
-    # mail.send_email()
+    mail.parse_args(mail.init_parser())
 
 
 if __name__ == "__main__":

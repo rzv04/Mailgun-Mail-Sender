@@ -30,3 +30,6 @@ ENV/
 
 #Ignore random CodeRunner file
 tempCodeRunnerFile.py
+
+#Ignore JSON Config File
+*.json

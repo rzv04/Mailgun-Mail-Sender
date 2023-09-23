@@ -31,7 +31,7 @@ class MainMenu:
     mail = Mail()
 
     def load_contents_and_send_email(self) -> None:
-        self.mail.set_mail_contents()
+        self.mail.set_mail_contents_interactive()
         self.mail.send_email()
 
         FeedbackHandler().data_loaded_successfully()
