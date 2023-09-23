@@ -168,7 +168,7 @@ class MailGun:
             hash_check = Hasher.hash_csv()
             with open(Config.config_path, "r") as reader:
                 json_data = json.load(reader)
-                if hash_check == json_data["hash"] and json_data["Valid"] == True:
+                if hash_check == json_data["hash"] and json_data["Valid"] == "True":
                     return
                 else:
                     set_params()
@@ -302,7 +302,7 @@ class Mail(MailGun):
         pass
 
 
-mail = Mail()
+mail = Mail()  # TODO propose a fix to make this local
 
 
 class Hasher:
