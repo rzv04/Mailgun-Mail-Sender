@@ -198,7 +198,7 @@ class Mail(MailGun):
                     "to": self.to_emails,
                     "subject": self.subject,
                     "text": self.content,
-                    # Enable DKIM signature
+                    # Enable DKIM signature, but only if the domain has been verified
                     "o:dkim": "yes",
                 },
             )
@@ -377,7 +377,6 @@ class Config:
             reader.truncate()
 
 
-# Example flow
 def main():
     mail.parse_args(mail.init_parser())
 
