@@ -103,7 +103,7 @@ class MailGun:
 
     ##################################################
 
-    def set_params_from_csv(self) -> None:
+    def set_params_from_csv(self):
         """
         Reads and sets the necessary parameters using a CSV file.
         Reads and sets the necessary parameters using a CSV file.
@@ -157,7 +157,7 @@ class MailGun:
             with open(Config.config_path, "r") as reader:
                 json_data = json.load(reader)
                 if hash_check == json_data["hash"] and json_data["Valid"] == "True":
-                    return
+                    return set_params()
                 else:
                     set_params()
                     valid, _ = self.validate_credentials()
@@ -165,7 +165,7 @@ class MailGun:
         else:
             set_params()
             valid, _ = self.validate_credentials()
-            Config.update_config(valid)
+            Config.update_config(valid)  # TEST
 
 
 class Mail(MailGun):
@@ -198,6 +198,8 @@ class Mail(MailGun):
                     "to": self.to_emails,
                     "subject": self.subject,
                     "text": self.content,
+                    # Enable DKIM signature
+                    "o:dkim": "yes",
                 },
             )
         except Exception:
