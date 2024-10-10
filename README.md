@@ -1,6 +1,6 @@
 # Mail-Sender Console-Based App
 
-A simple TUI script used for sending emails through MailGun API. The authentication protocol is insecure, and email validation is not yet implemented.
+A simple TUI script used for sending emails through MailGun API.
 The mailgun module also includes a simple CLI argument parser that for now supports only loading the CSV file data.
 
 ![TUI Image](https://github.com/YoloTheBEst/Mailgun-Mail-Sender/blob/main/images/TUI.png)
